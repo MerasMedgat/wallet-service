@@ -2,7 +2,10 @@ package com.example.walletservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -28,5 +31,11 @@ public class User {
     @Column(name="last_name" , nullable=false)
     private String lastName;
 
+    @CreationTimestamp
+    @Column(nullable=false,updatable=false)
+    private LocalDateTime createdAt;
+    @UpdateTimestamp
+    @Column(nullable=false)
+    private LocalDateTime updatedAt;
 
 }
