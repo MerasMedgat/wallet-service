@@ -1,0 +1,113 @@
+package com.example.walletservice.service;
+
+import com.example.walletservice.dto.request.WalletRequest;
+import com.example.walletservice.dto.request.WalletTopUpRequest;
+import com.example.walletservice.dto.request.WalletWithdrawRequest;
+import com.example.walletservice.dto.response.WalletResponse;
+import com.example.walletservice.entity.StatusEnum;
+import com.example.walletservice.entity.User;
+import com.example.walletservice.entity.Wallet;
+import com.example.walletservice.exception.*;
+import com.example.walletservice.mapper.WalletMapper;
+import com.example.walletservice.repository.UserRepository;
+import com.example.walletservice.repository.WalletRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+
+
+@Service
+@RequiredArgsConstructor
+public class WalletService {
+
+    private final WalletRepository walletRepository;
+    private final UserRepository userRepository;
+    private final WalletMapper walletMapper;
+
+    public WalletResponse createWallet(Long userId,WalletRequest walletRequest){
+        User user = userRepository.findById(userId)
+                .orElseThrow(()->
+                        new UserNotFoundException("User not found"));
+
+        if (walletRepository.existsByUserIdAndCurrency(userId,walletRequest.getCurrency())){
+            throw new WalletAlreadyExistsException("Wallet already exists");
+        }
+
+        Wallet wallet = walletMapper.toEntity(walletRequest);
+        wallet.setUser(user);
+        wallet.setBalance(BigDecimal.ZERO);
+        wallet.setStatus(StatusEnum.ACTIVE);
+        Wallet savedWallet = walletRepository.save(wallet);
+        return walletMapper.toResponse(savedWallet);
+    }
+
+    public WalletResponse getWallet(Long id){
+        Wallet wallet = walletRepository.findById(id)
+                .orElseThrow(()->
+                        new WalletNotFoundException("Wallet not found"));
+        return walletMapper.toResponse(wallet);
+    }
+
+    public List<WalletResponse> getAllWallets(Long userId){
+        List<WalletResponse> wallets = walletRepository.findByUserId(userId)
+                .stream()
+                .map(walletMapper::toResponse)
+                .toList();
+        return wallets;
+    }
+
+    public WalletResponse blockWallet(Long walletId){
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(()->
+                        new WalletNotFoundException("Wallet not found"));
+        if(wallet.getStatus() == StatusEnum.BLOCKED){
+            throw new WalletAlreadyBlockedException("Wallet already blocked");
+        }
+        wallet.setStatus(StatusEnum.BLOCKED);
+        Wallet savedWallet = walletRepository.save(wallet);
+        return walletMapper.toResponse(savedWallet);
+    }
+
+    public WalletResponse activateWallet(Long walletId){
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(()->
+                        new WalletNotFoundException("Wallet not found"));
+        if(wallet.getStatus() == StatusEnum.ACTIVE){
+            throw new WalletAlreadyActiveException("Wallet already active");
+        }
+        wallet.setStatus(StatusEnum.ACTIVE);
+        Wallet savedWallet = walletRepository.save(wallet);
+        return walletMapper.toResponse(savedWallet);
+    }
+
+    public WalletResponse topUp(Long walletId, WalletTopUpRequest request){
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(()->
+                        new WalletNotFoundException("Wallet not found"));
+        if(wallet.getStatus() != StatusEnum.ACTIVE){
+            throw new WalletNotActiveException("Wallet not active");
+        }
+        wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+        Wallet savedWallet = walletRepository.save(wallet);
+        return walletMapper.toResponse(savedWallet);
+    }
+
+    public WalletResponse withdraw(Long walletId, WalletWithdrawRequest request){
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(()->
+                        new WalletNotFoundException("Wallet not found"));
+        if(wallet.getStatus() != StatusEnum.ACTIVE){
+            throw new WalletNotActiveException("Wallet not active");
+        }
+        if(wallet.getBalance().compareTo(request.getAmount()) <0){
+            throw new InsufficientBalanceException("Insufficient balance");
+        }
+        wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
+        Wallet savedWallet = walletRepository.save(wallet);
+        return walletMapper.toResponse(savedWallet);
+    }
+
+}
