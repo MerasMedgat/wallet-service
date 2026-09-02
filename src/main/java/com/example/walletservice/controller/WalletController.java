@@ -4,6 +4,7 @@ package com.example.walletservice.controller;
 import com.example.walletservice.dto.request.WalletRequest;
 import com.example.walletservice.dto.request.WalletTopUpRequest;
 import com.example.walletservice.dto.request.WalletWithdrawRequest;
+import com.example.walletservice.dto.response.TransactionResponse;
 import com.example.walletservice.dto.response.WalletResponse;
 import com.example.walletservice.service.WalletService;
 import jakarta.validation.Valid;
@@ -54,5 +55,6 @@ public class WalletController {
     public WalletResponse withdraw(@PathVariable Long walletId, @Valid @RequestBody WalletWithdrawRequest request){
         return walletService.withdraw(walletId,request);
     }
+
 
 }

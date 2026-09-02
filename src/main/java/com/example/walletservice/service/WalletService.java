@@ -3,16 +3,18 @@ package com.example.walletservice.service;
 import com.example.walletservice.dto.request.WalletRequest;
 import com.example.walletservice.dto.request.WalletTopUpRequest;
 import com.example.walletservice.dto.request.WalletWithdrawRequest;
+import com.example.walletservice.dto.response.TransactionResponse;
 import com.example.walletservice.dto.response.WalletResponse;
-import com.example.walletservice.entity.StatusEnum;
-import com.example.walletservice.entity.User;
-import com.example.walletservice.entity.Wallet;
+import com.example.walletservice.entity.*;
 import com.example.walletservice.exception.*;
+import com.example.walletservice.mapper.TransactionMapper;
 import com.example.walletservice.mapper.WalletMapper;
+import com.example.walletservice.repository.TransactionRepository;
 import com.example.walletservice.repository.UserRepository;
 import com.example.walletservice.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,6 +28,8 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final UserRepository userRepository;
     private final WalletMapper walletMapper;
+    private final TransactionRepository transactionRepository;
+
 
     public WalletResponse createWallet(Long userId,WalletRequest walletRequest){
         User user = userRepository.findById(userId)
@@ -83,6 +87,7 @@ public class WalletService {
         return walletMapper.toResponse(savedWallet);
     }
 
+    @Transactional
     public WalletResponse topUp(Long walletId, WalletTopUpRequest request){
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
@@ -91,10 +96,18 @@ public class WalletService {
             throw new WalletNotActiveException("Wallet not active");
         }
         wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+        Transaction transaction = Transaction.builder()
+                .wallet(wallet)
+                .transactionType(TransactionTypeEnum.TOP_UP)
+                .amount(request.getAmount())
+                .balanceAfterTransaction(wallet.getBalance())
+                .build();
+        transactionRepository.save(transaction);
         Wallet savedWallet = walletRepository.save(wallet);
         return walletMapper.toResponse(savedWallet);
     }
 
+    @Transactional
     public WalletResponse withdraw(Long walletId, WalletWithdrawRequest request){
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
@@ -105,9 +118,20 @@ public class WalletService {
         if(wallet.getBalance().compareTo(request.getAmount()) <0){
             throw new InsufficientBalanceException("Insufficient balance");
         }
+
         wallet.setBalance(wallet.getBalance().subtract(request.getAmount()));
+        Transaction transaction = Transaction.builder()
+                .wallet(wallet)
+                .transactionType(TransactionTypeEnum.WITHDRAW)
+                .amount(request.getAmount())
+                .balanceAfterTransaction(wallet.getBalance())
+                .build();
+        transactionRepository.save(transaction);
         Wallet savedWallet = walletRepository.save(wallet);
         return walletMapper.toResponse(savedWallet);
     }
+
+
+
 
 }
