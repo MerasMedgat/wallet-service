@@ -1,9 +1,9 @@
 package com.example.walletservice.service;
 
 import com.example.walletservice.dto.request.TransferRequest;
-import com.example.walletservice.entity.StatusEnum;
+import com.example.walletservice.enums.WalletStatusEnum;
 import com.example.walletservice.entity.Transaction;
-import com.example.walletservice.entity.TransactionTypeEnum;
+import com.example.walletservice.enums.TransactionTypeEnum;
 import com.example.walletservice.entity.Wallet;
 import com.example.walletservice.exception.*;
 import com.example.walletservice.repository.TransactionRepository;
@@ -30,10 +30,10 @@ public class TransferService {
         if (request.getFromWalletId().equals(request.getToWalletId())){
             throw new TransferToSameWalletException("The recipient's and sender's wallets are the same");
         }
-        if (fromWallet.getStatus() != StatusEnum.ACTIVE){
+        if (fromWallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Sender's wallet not activated");
         }
-        if (toWallet.getStatus() != StatusEnum.ACTIVE){
+        if (toWallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Recipient's wallet not activated");
         }
         if(fromWallet.getBalance().compareTo(request.getAmount()) <0){

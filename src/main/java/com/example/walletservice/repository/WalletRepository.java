@@ -1,6 +1,6 @@
 package com.example.walletservice.repository;
 
-import com.example.walletservice.entity.CurrencyEnum;
+import com.example.walletservice.enums.CurrencyEnum;
 import com.example.walletservice.entity.Wallet;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,6 +1,6 @@
 package com.example.walletservice.dto.response;
 
-import com.example.walletservice.entity.TransactionTypeEnum;
+import com.example.walletservice.enums.TransactionTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 

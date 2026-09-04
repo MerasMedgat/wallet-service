@@ -1,13 +1,13 @@
 package com.example.walletservice.service;
 
+import com.example.walletservice.enums.WalletStatusEnum;
+import com.example.walletservice.enums.TransactionTypeEnum;
 import com.example.walletservice.dto.request.WalletRequest;
 import com.example.walletservice.dto.request.WalletTopUpRequest;
 import com.example.walletservice.dto.request.WalletWithdrawRequest;
-import com.example.walletservice.dto.response.TransactionResponse;
 import com.example.walletservice.dto.response.WalletResponse;
 import com.example.walletservice.entity.*;
 import com.example.walletservice.exception.*;
-import com.example.walletservice.mapper.TransactionMapper;
 import com.example.walletservice.mapper.WalletMapper;
 import com.example.walletservice.repository.TransactionRepository;
 import com.example.walletservice.repository.UserRepository;
@@ -43,7 +43,7 @@ public class WalletService {
         Wallet wallet = walletMapper.toEntity(walletRequest);
         wallet.setUser(user);
         wallet.setBalance(BigDecimal.ZERO);
-        wallet.setStatus(StatusEnum.ACTIVE);
+        wallet.setStatus(WalletStatusEnum.ACTIVE);
         Wallet savedWallet = walletRepository.save(wallet);
         return walletMapper.toResponse(savedWallet);
     }
@@ -67,10 +67,10 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
-        if(wallet.getStatus() == StatusEnum.BLOCKED){
+        if(wallet.getStatus() == WalletStatusEnum.BLOCKED){
             throw new WalletAlreadyBlockedException("Wallet already blocked");
         }
-        wallet.setStatus(StatusEnum.BLOCKED);
+        wallet.setStatus(WalletStatusEnum.BLOCKED);
         Wallet savedWallet = walletRepository.save(wallet);
         return walletMapper.toResponse(savedWallet);
     }
@@ -79,10 +79,10 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
-        if(wallet.getStatus() == StatusEnum.ACTIVE){
+        if(wallet.getStatus() == WalletStatusEnum.ACTIVE){
             throw new WalletAlreadyActiveException("Wallet already active");
         }
-        wallet.setStatus(StatusEnum.ACTIVE);
+        wallet.setStatus(WalletStatusEnum.ACTIVE);
         Wallet savedWallet = walletRepository.save(wallet);
         return walletMapper.toResponse(savedWallet);
     }
@@ -92,7 +92,7 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
-        if(wallet.getStatus() != StatusEnum.ACTIVE){
+        if(wallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Wallet not active");
         }
         wallet.setBalance(wallet.getBalance().add(request.getAmount()));
@@ -112,7 +112,7 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
-        if(wallet.getStatus() != StatusEnum.ACTIVE){
+        if(wallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Wallet not active");
         }
         if(wallet.getBalance().compareTo(request.getAmount()) <0){

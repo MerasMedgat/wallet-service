@@ -1,5 +1,7 @@
 package com.example.walletservice.entity;
 
+import com.example.walletservice.enums.CurrencyEnum;
+import com.example.walletservice.enums.WalletStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,7 +32,7 @@ public class Wallet {
     private CurrencyEnum currency;
     @Column(nullable=false)
     @Enumerated(EnumType.STRING)
-    private StatusEnum status;
+    private WalletStatusEnum status;
     @Column(nullable=false,updatable=false)
     @CreationTimestamp
     private LocalDateTime createdAt;

@@ -1,14 +1,10 @@
 package com.example.walletservice.dto.response;
 
-import com.example.walletservice.entity.CurrencyEnum;
-import com.example.walletservice.entity.StatusEnum;
-import com.example.walletservice.entity.User;
-import jakarta.persistence.*;
+import com.example.walletservice.enums.CurrencyEnum;
+import com.example.walletservice.enums.WalletStatusEnum;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,7 +18,7 @@ public class WalletResponse {
     private Long userId;
     private BigDecimal balance;
     private CurrencyEnum currency;
-    private StatusEnum status;
+    private WalletStatusEnum status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

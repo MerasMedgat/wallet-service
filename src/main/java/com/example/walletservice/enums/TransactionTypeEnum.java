@@ -1,4 +1,4 @@
-package com.example.walletservice.entity;
+package com.example.walletservice.enums;
 
 public enum TransactionTypeEnum {
     TOP_UP,
