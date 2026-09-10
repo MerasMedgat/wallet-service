@@ -36,7 +36,7 @@ public class Deposit {
     private LocalDate endDate;
     @Enumerated(EnumType.STRING)
     @Column(nullable=false)
-    private DepositStatusEnum depositStatus;
+    private DepositStatusEnum Status;
     @CreationTimestamp
     @Column(nullable=false,updatable=false)
     private LocalDateTime createdAt;

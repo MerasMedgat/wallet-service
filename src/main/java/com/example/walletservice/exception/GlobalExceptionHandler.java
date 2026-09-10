@@ -12,22 +12,27 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private ErrorResponse buildErrorResponse(HttpStatus status, String message) {
+        return new ErrorResponse(
+                status.value(),
+                message,
+                null
+        );
+    }
     @ExceptionHandler(EmailAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleEmailAlreadyExists(EmailAlreadyExistsException ex){
-        return new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                null);
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage());
     }
 
     @ExceptionHandler(PhoneAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handlePhoneAlreadyExists(PhoneAlreadyExistsException ex){
-        return new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                null);
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -55,11 +60,101 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handlerUserNotFoundException(UserNotFoundException ex){
-        return new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ex.getMessage(),
-                null
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
         );
     }
+
+    @ExceptionHandler(WalletNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerWalletNotFoundException(WalletNotFoundException ex){
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage());
+    }
+
+    @ExceptionHandler(WalletNotActiveException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlerWalletNotActiveException(WalletNotActiveException ex){
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlerInsufficientBalanceException(InsufficientBalanceException ex){
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(TransferToSameWalletException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlerTransferToSameWalletException(TransferToSameWalletException ex){
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(FromWalletIdNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerFromWalletIdNotFoundException(FromWalletIdNotFoundException ex){
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(DepositNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerDepositNotFoundException(DepositNotFoundException ex){
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(ToWalletIdNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handlerToWalletIdNotFoundException(ToWalletIdNotFoundException ex){
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(InvalidDepositTermException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlerInvalidDepositTermException(InvalidDepositTermException ex){
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(DepositAlreadyClosedException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlerDepositAlreadyClosedException(DepositAlreadyClosedException ex){
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+    }
+
+    @ExceptionHandler(DepositAlreadyCompletedException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handlerDepositAlreadyCompletedException(DepositAlreadyCompletedException ex){
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+    }
+
+
 
 }

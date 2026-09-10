@@ -7,10 +7,7 @@ import com.example.walletservice.entity.Deposit;
 import com.example.walletservice.entity.Wallet;
 import com.example.walletservice.enums.DepositStatusEnum;
 import com.example.walletservice.enums.WalletStatusEnum;
-import com.example.walletservice.exception.InsufficientBalanceException;
-import com.example.walletservice.exception.InvalidDepositTermException;
-import com.example.walletservice.exception.WalletNotActiveException;
-import com.example.walletservice.exception.WalletNotFoundException;
+import com.example.walletservice.exception.*;
 import com.example.walletservice.mapper.DepositMapper;
 import com.example.walletservice.repository.DepositRepository;
 import com.example.walletservice.repository.WalletRepository;
@@ -20,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +47,7 @@ public class DepositService {
         deposit.setInterestRate(calculateInterestRate(depositRequest.getTermMonths()));
         deposit.setStartDate(LocalDate.now());
         deposit.setEndDate(deposit.getStartDate().plusMonths(depositRequest.getTermMonths()));
-        deposit.setDepositStatus(DepositStatusEnum.ACTIVE);
+        deposit.setStatus(DepositStatusEnum.ACTIVE);
         Deposit savedDeposit =  depositRepository.save(deposit);
         return depositMapper.toResponse(savedDeposit);
 
@@ -72,4 +72,57 @@ public class DepositService {
         else{throw new InvalidDepositTermException("Invalid deposit term");}
 
     }
+
+    public List<DepositResponse> getAllDeposits(Long walletId){
+        walletRepository.findById(walletId).orElseThrow(()->
+                new WalletNotFoundException("Wallet not found"));
+        List<DepositResponse> deposits = depositRepository.findAllDepositsByWalletId(walletId)
+                .stream()
+                .map(depositMapper::toResponse)
+                .toList();
+        return deposits;
+    }
+
+
+    public DepositResponse getDeposit(Long depositId){
+        Deposit deposit = depositRepository.findById(depositId)
+                .orElseThrow(()->
+                        new DepositNotFoundException("Deposit not found"));
+        return depositMapper.toResponse(deposit);
+    }
+
+    @Transactional
+    public DepositResponse closeDeposit(Long depositId){
+        Deposit deposit = depositRepository.findById(depositId)
+                .orElseThrow(()->
+                        new DepositNotFoundException("Deposit not found"));
+        if(deposit.getStatus() == DepositStatusEnum.CLOSED){
+            throw new DepositAlreadyClosedException("Deposit already closed");
+        }
+        else if(deposit.getStatus() == DepositStatusEnum.COMPLETED){
+            throw new DepositAlreadyCompletedException("Deposit already completed");
+        }
+        if(LocalDate.now().isBefore(deposit.getEndDate())){
+            deposit.setInterestRate(BigDecimal.valueOf(2.00));
+        }
+        long days = ChronoUnit.DAYS.between(deposit.getStartDate(),LocalDate.now());
+        BigDecimal interest = deposit.getAmount()
+                .multiply((deposit.getInterestRate()
+                .divide(BigDecimal.valueOf(100))
+                .multiply((BigDecimal.valueOf(days)
+                        .divide(BigDecimal.valueOf(365),RoundingMode.HALF_UP)))));
+        BigDecimal amountAfterDeposit = deposit.getAmount().add(interest);
+        Wallet wallet = deposit.getWallet();
+        wallet.setBalance(wallet.getBalance().add(amountAfterDeposit));
+        if(LocalDate.now().isBefore(deposit.getEndDate())){
+            deposit.setStatus(DepositStatusEnum.CLOSED);
+        }
+        else{
+            deposit.setStatus(DepositStatusEnum.COMPLETED);
+        }
+        walletRepository.save(wallet);
+        depositRepository.save(deposit);
+        return depositMapper.toResponse(deposit);
+    }
+
 }
