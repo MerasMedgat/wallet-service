@@ -14,7 +14,8 @@ public class TransferController {
     private final TransferService transferService;
 
     @PostMapping
-    public void transfer(@Valid @RequestBody TransferRequest request){
-        transferService.transfer(request);
+    public void transfer(@Valid @RequestBody TransferRequest request,
+                         @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey){
+        transferService.transfer(request, idempotencyKey);
     }
 }

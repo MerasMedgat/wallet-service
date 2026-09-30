@@ -6,10 +6,10 @@ import com.example.walletservice.repository.TransactionRepository;
 import com.example.walletservice.repository.WalletRepository;
 import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +20,9 @@ public class TransactionService {
     private final TransactionMapper transactionMapper;
 
     @Transactional(readOnly = true)
-    public List<TransactionResponse> getTransactionsByWalletId(Long walletId){
+    public Page<TransactionResponse> getTransactionsByWalletId(Long walletId, Pageable pageable){
         SecurityUtils.checkOwner(walletRepository.getOrThrow(walletId).getUser());
-        return transactionRepository.findByWalletId(walletId)
-                .stream()
-                .map(transactionMapper::toResponse)
-                .toList();
+        return transactionRepository.findByWalletId(walletId, pageable)
+                .map(transactionMapper::toResponse);
     }
 }

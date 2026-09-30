@@ -11,6 +11,8 @@ import com.example.walletservice.repository.DepositRepository;
 import com.example.walletservice.repository.WalletRepository;
 import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +20,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class DepositService {
     @Transactional
     public DepositResponse createDeposit(DepositRequest request){
         BigDecimal rate = interestRateFor(request.termMonths());
-        Wallet wallet = walletRepository.getOrThrow(request.walletId());
+        Wallet wallet = walletRepository.lockOrThrow(request.walletId());
         SecurityUtils.checkOwner(wallet.getUser());
         wallet.debit(request.amount());
 
@@ -47,12 +48,10 @@ public class DepositService {
     }
 
     @Transactional(readOnly = true)
-    public List<DepositResponse> getDeposits(Long walletId){
+    public Page<DepositResponse> getDeposits(Long walletId, Pageable pageable){
         SecurityUtils.checkOwner(walletRepository.getOrThrow(walletId).getUser());
-        return depositRepository.findByWalletId(walletId)
-                .stream()
-                .map(depositMapper::toResponse)
-                .toList();
+        return depositRepository.findByWalletId(walletId, pageable)
+                .map(depositMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -68,8 +67,9 @@ public class DepositService {
      */
     @Transactional
     public DepositResponse closeDeposit(Long depositId){
-        Deposit deposit = depositRepository.getOrThrow(depositId);
-        Wallet wallet = deposit.getWallet();
+        // lock the deposit first: two concurrent "close" calls must not both pay out
+        Deposit deposit = depositRepository.lockOrThrow(depositId);
+        Wallet wallet = walletRepository.lockOrThrow(deposit.getWallet().getId());
         SecurityUtils.checkOwner(wallet.getUser());
         if (deposit.getStatus() != DepositStatusEnum.ACTIVE) {
             throw new BadRequestException("Deposit already " + deposit.getStatus().name().toLowerCase());

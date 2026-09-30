@@ -1,5 +1,6 @@
 package com.example.walletservice.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -42,5 +43,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse handleAccessDenied(AccessDeniedException ex) {
         return new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Access denied");
+    }
+
+    // e.g. the same Idempotency-Key sent twice concurrently, or a unique email race
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        return new ErrorResponse(HttpStatus.CONFLICT.value(), "Request conflicts with existing data");
     }
 }

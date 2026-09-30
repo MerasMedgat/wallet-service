@@ -60,7 +60,7 @@ public class WalletService {
 
     @Transactional
     public WalletResponse blockWallet(Long walletId){
-        Wallet wallet = walletRepository.getOrThrow(walletId);
+        Wallet wallet = walletRepository.lockOrThrow(walletId);
         if (wallet.getStatus() == WalletStatusEnum.BLOCKED) {
             throw new ConflictException("Wallet already blocked");
         }
@@ -71,7 +71,7 @@ public class WalletService {
 
     @Transactional
     public WalletResponse activateWallet(Long walletId){
-        Wallet wallet = walletRepository.getOrThrow(walletId);
+        Wallet wallet = walletRepository.lockOrThrow(walletId);
         if (wallet.getStatus() == WalletStatusEnum.ACTIVE) {
             throw new ConflictException("Wallet already active");
         }
@@ -81,7 +81,7 @@ public class WalletService {
 
     @Transactional
     public WalletResponse topUp(Long walletId, AmountRequest request){
-        Wallet wallet = walletRepository.getOrThrow(walletId);
+        Wallet wallet = walletRepository.lockOrThrow(walletId);
         SecurityUtils.checkOwner(wallet.getUser());
         wallet.credit(request.amount());
         transactionRepository.save(Transaction.of(wallet, TransactionTypeEnum.TOP_UP, request.amount()));
@@ -90,7 +90,7 @@ public class WalletService {
 
     @Transactional
     public WalletResponse withdraw(Long walletId, AmountRequest request){
-        Wallet wallet = walletRepository.getOrThrow(walletId);
+        Wallet wallet = walletRepository.lockOrThrow(walletId);
         SecurityUtils.checkOwner(wallet.getUser());
         wallet.debit(request.amount());
         transactionRepository.save(Transaction.of(wallet, TransactionTypeEnum.WITHDRAW, request.amount()));

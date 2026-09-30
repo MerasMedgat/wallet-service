@@ -5,10 +5,12 @@ import com.example.walletservice.dto.response.DepositResponse;
 import com.example.walletservice.service.DepositService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/deposits")
@@ -29,8 +31,10 @@ public class DepositController {
     }
 
     @GetMapping("/wallet/{walletId}")
-    public List<DepositResponse> getDeposits(@PathVariable Long walletId){
-        return depositService.getDeposits(walletId);
+    public Page<DepositResponse> getDeposits(
+            @PathVariable Long walletId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable){
+        return depositService.getDeposits(walletId, pageable);
     }
 
     @PostMapping("/{depositId}/close")

@@ -1,11 +1,11 @@
 package com.example.walletservice.repository;
 
 import com.example.walletservice.entity.Transaction;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
 
-    List<Transaction> findByWalletId(Long walletId);
+    Page<Transaction> findByWalletId(Long walletId, Pageable pageable);
 }
