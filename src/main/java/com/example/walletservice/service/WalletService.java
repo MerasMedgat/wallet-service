@@ -12,6 +12,7 @@ import com.example.walletservice.mapper.WalletMapper;
 import com.example.walletservice.repository.TransactionRepository;
 import com.example.walletservice.repository.UserRepository;
 import com.example.walletservice.repository.WalletRepository;
+import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +32,8 @@ public class WalletService {
     private final TransactionRepository transactionRepository;
 
 
-    public WalletResponse createWallet(Long userId,WalletRequest walletRequest){
+    public WalletResponse createWallet(WalletRequest walletRequest){
+        Long userId = SecurityUtils.currentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(()->
                         new UserNotFoundException("User not found"));
@@ -52,11 +54,12 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(id)
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
+        SecurityUtils.checkOwner(wallet.getUser());
         return walletMapper.toResponse(wallet);
     }
 
-    public List<WalletResponse> getAllWallets(Long userId){
-        List<WalletResponse> wallets = walletRepository.findByUserId(userId)
+    public List<WalletResponse> getMyWallets(){
+        List<WalletResponse> wallets = walletRepository.findByUserId(SecurityUtils.currentUserId())
                 .stream()
                 .map(walletMapper::toResponse)
                 .toList();
@@ -92,6 +95,7 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
+        SecurityUtils.checkOwner(wallet.getUser());
         if(wallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Wallet not active");
         }
@@ -112,6 +116,7 @@ public class WalletService {
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
+        SecurityUtils.checkOwner(wallet.getUser());
         if(wallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Wallet not active");
         }

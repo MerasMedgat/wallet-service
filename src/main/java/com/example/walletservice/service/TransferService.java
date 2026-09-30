@@ -8,6 +8,7 @@ import com.example.walletservice.entity.Wallet;
 import com.example.walletservice.exception.*;
 import com.example.walletservice.repository.TransactionRepository;
 import com.example.walletservice.repository.WalletRepository;
+import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ public class TransferService {
         Wallet fromWallet = walletRepository.findById(request.getFromWalletId())
                 .orElseThrow(()->
                         new FromWalletIdNotFoundException("Sender's wallet not found"));
+        SecurityUtils.checkOwner(fromWallet.getUser());
         Wallet toWallet = walletRepository.findById(request.getToWalletId())
                 .orElseThrow(()->
                         new ToWalletIdNotFoundException("Recipient's wallet not found"));

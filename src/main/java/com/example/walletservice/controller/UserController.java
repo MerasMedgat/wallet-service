@@ -1,9 +1,12 @@
 package com.example.walletservice.controller;
 
 
+import com.example.walletservice.dto.request.LoginRequest;
 import com.example.walletservice.dto.request.RegisterRequest;
 import com.example.walletservice.dto.request.UpdateUserRequest;
+import com.example.walletservice.dto.response.AuthResponse;
 import com.example.walletservice.dto.response.UserResponse;
+import com.example.walletservice.service.AuthService;
 import com.example.walletservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,20 +18,26 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final AuthService authService;
 
     @PostMapping("/register")
     public UserResponse register(@Valid @RequestBody RegisterRequest request){
         return userService.register(request);
     }
 
-    @GetMapping("/{id}")
-    public UserResponse getUserById(@PathVariable Long id){
-        return userService.getUserById(id);
+    @PostMapping("/login")
+    public AuthResponse login(@Valid @RequestBody LoginRequest request){
+        return authService.login(request);
     }
 
-    @PatchMapping("/{id}")
-    public UserResponse updateUserProfile(@PathVariable Long id ,@Valid @RequestBody UpdateUserRequest request){
-        return userService.updateUserProfile(id,request);
+    @GetMapping("/me")
+    public UserResponse getCurrentUser(){
+        return userService.getCurrentUser();
+    }
+
+    @PatchMapping("/me")
+    public UserResponse updateCurrentUser(@Valid @RequestBody UpdateUserRequest request){
+        return userService.updateCurrentUser(request);
     }
 
 

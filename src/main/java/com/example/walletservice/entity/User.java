@@ -1,5 +1,6 @@
 package com.example.walletservice.entity;
 
+import com.example.walletservice.enums.RoleEnum;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,6 +31,9 @@ public class User {
     private String firstName;
     @Column(name="last_name" , nullable=false)
     private String lastName;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable=false)
+    private RoleEnum role;
 
     @CreationTimestamp
     @Column(nullable=false,updatable=false)

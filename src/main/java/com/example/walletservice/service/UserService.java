@@ -5,11 +5,13 @@ import com.example.walletservice.dto.request.RegisterRequest;
 import com.example.walletservice.dto.request.UpdateUserRequest;
 import com.example.walletservice.dto.response.UserResponse;
 import com.example.walletservice.entity.User;
+import com.example.walletservice.enums.RoleEnum;
 import com.example.walletservice.exception.EmailAlreadyExistsException;
 import com.example.walletservice.exception.PhoneAlreadyExistsException;
 import com.example.walletservice.exception.UserNotFoundException;
 import com.example.walletservice.mapper.UserMapper;
 import com.example.walletservice.repository.UserRepository;
+import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,21 +37,22 @@ public class UserService {
         User user = userMapper.toEntity(registerRequest);
 
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        user.setRole(RoleEnum.USER);
 
         User savedUser = userRepository.save(user);
 
         return userMapper.toResponse(savedUser );
     }
 
-    public UserResponse getUserById(Long id){
-        User user = userRepository.findById(id)
+    public UserResponse getCurrentUser(){
+        User user = userRepository.findById(SecurityUtils.currentUserId())
                 .orElseThrow(()->
                         new UserNotFoundException("User not Found"));
         return userMapper.toResponse(user);
     }
 
-    public UserResponse updateUserProfile(Long id,UpdateUserRequest request) {
-        User user = userRepository.findById(id)
+    public UserResponse updateCurrentUser(UpdateUserRequest request) {
+        User user = userRepository.findById(SecurityUtils.currentUserId())
                 .orElseThrow(() ->
                         new UserNotFoundException("User not found"));
         if (request.getEmail() != null

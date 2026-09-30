@@ -1,6 +1,8 @@
 package com.example.walletservice.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -19,6 +21,22 @@ public class GlobalExceptionHandler {
                 null
         );
     }
+    @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse handleAuthenticationException(AuthenticationException ex){
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid email or password");
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse handleAccessDenied(AccessDeniedException ex){
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "Access denied");
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponse handleEmailAlreadyExists(EmailAlreadyExistsException ex){

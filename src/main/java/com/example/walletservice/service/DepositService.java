@@ -11,6 +11,7 @@ import com.example.walletservice.exception.*;
 import com.example.walletservice.mapper.DepositMapper;
 import com.example.walletservice.repository.DepositRepository;
 import com.example.walletservice.repository.WalletRepository;
+import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class DepositService {
         Wallet wallet = walletRepository.findById(depositRequest.getWalletId())
                 .orElseThrow(()->
                         new WalletNotFoundException("Wallet not found"));
+        SecurityUtils.checkOwner(wallet.getUser());
         if(wallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Wallet not active");
         }
@@ -74,8 +76,9 @@ public class DepositService {
     }
 
     public List<DepositResponse> getAllDeposits(Long walletId){
-        walletRepository.findById(walletId).orElseThrow(()->
+        Wallet wallet = walletRepository.findById(walletId).orElseThrow(()->
                 new WalletNotFoundException("Wallet not found"));
+        SecurityUtils.checkOwner(wallet.getUser());
         List<DepositResponse> deposits = depositRepository.findAllDepositsByWalletId(walletId)
                 .stream()
                 .map(depositMapper::toResponse)
@@ -88,6 +91,7 @@ public class DepositService {
         Deposit deposit = depositRepository.findById(depositId)
                 .orElseThrow(()->
                         new DepositNotFoundException("Deposit not found"));
+        SecurityUtils.checkOwner(deposit.getWallet().getUser());
         return depositMapper.toResponse(deposit);
     }
 
@@ -96,6 +100,7 @@ public class DepositService {
         Deposit deposit = depositRepository.findById(depositId)
                 .orElseThrow(()->
                         new DepositNotFoundException("Deposit not found"));
+        SecurityUtils.checkOwner(deposit.getWallet().getUser());
         if(deposit.getStatus() == DepositStatusEnum.CLOSED){
             throw new DepositAlreadyClosedException("Deposit already closed");
         }

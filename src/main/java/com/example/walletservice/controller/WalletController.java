@@ -9,6 +9,7 @@ import com.example.walletservice.dto.response.WalletResponse;
 import com.example.walletservice.service.WalletService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,9 +21,9 @@ public class WalletController {
 
     private final WalletService walletService;
 
-    @PostMapping("/{userId}")
-    public WalletResponse createWallet(@PathVariable Long userId, @Valid @RequestBody WalletRequest walletRequest){
-        return walletService.createWallet(userId,walletRequest);
+    @PostMapping
+    public WalletResponse createWallet(@Valid @RequestBody WalletRequest walletRequest){
+        return walletService.createWallet(walletRequest);
 
     }
 
@@ -31,16 +32,18 @@ public class WalletController {
         return walletService.getWallet(walletId);
     }
 
-    @GetMapping("/users/{userId}/wallets")
-    public List<WalletResponse> getAllWallets(@PathVariable Long userId){
-        return walletService.getAllWallets(userId);
+    @GetMapping
+    public List<WalletResponse> getMyWallets(){
+        return walletService.getMyWallets();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{walletId}/block")
     public WalletResponse blockWallet(@PathVariable Long walletId){
         return walletService.blockWallet(walletId);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{walletId}/activate")
     public WalletResponse activateWallet(@PathVariable Long walletId){
         return walletService.activateWallet(walletId);

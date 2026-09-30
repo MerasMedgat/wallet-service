@@ -1,6 +1,7 @@
 package com.example.walletservice.dto.response;
 
 
+import com.example.walletservice.enums.RoleEnum;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,4 +14,5 @@ public class UserResponse {
     private String phone;
     private String firstName;
     private String lastName;
+    private RoleEnum role;
 }
