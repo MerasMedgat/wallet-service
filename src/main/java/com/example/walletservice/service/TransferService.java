@@ -21,15 +21,15 @@ public class TransferService {
 
     @Transactional
     public void transfer(TransferRequest request){
+        if (request.getFromWalletId().equals(request.getToWalletId())){
+            throw new TransferToSameWalletException("The recipient's and sender's wallets are the same");
+        }
         Wallet fromWallet = walletRepository.findById(request.getFromWalletId())
                 .orElseThrow(()->
                         new FromWalletIdNotFoundException("Sender's wallet not found"));
         Wallet toWallet = walletRepository.findById(request.getToWalletId())
                 .orElseThrow(()->
                         new ToWalletIdNotFoundException("Recipient's wallet not found"));
-        if (request.getFromWalletId().equals(request.getToWalletId())){
-            throw new TransferToSameWalletException("The recipient's and sender's wallets are the same");
-        }
         if (fromWallet.getStatus() != WalletStatusEnum.ACTIVE){
             throw new WalletNotActiveException("Sender's wallet not activated");
         }

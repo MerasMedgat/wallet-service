@@ -106,11 +106,11 @@ public class DepositService {
             deposit.setInterestRate(BigDecimal.valueOf(2.00));
         }
         long days = ChronoUnit.DAYS.between(deposit.getStartDate(),LocalDate.now());
+        // amount * rate% * days / 365, rounded to cents only at the end
         BigDecimal interest = deposit.getAmount()
-                .multiply((deposit.getInterestRate()
-                .divide(BigDecimal.valueOf(100))
-                .multiply((BigDecimal.valueOf(days)
-                        .divide(BigDecimal.valueOf(365),RoundingMode.HALF_UP)))));
+                .multiply(deposit.getInterestRate())
+                .multiply(BigDecimal.valueOf(days))
+                .divide(BigDecimal.valueOf(36500), 2, RoundingMode.HALF_UP);
         BigDecimal amountAfterDeposit = deposit.getAmount().add(interest);
         Wallet wallet = deposit.getWallet();
         wallet.setBalance(wallet.getBalance().add(amountAfterDeposit));

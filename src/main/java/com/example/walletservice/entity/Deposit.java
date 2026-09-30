@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "deposits")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -35,8 +36,8 @@ public class Deposit {
     @Column(nullable=false)
     private LocalDate endDate;
     @Enumerated(EnumType.STRING)
-    @Column(nullable=false)
-    private DepositStatusEnum Status;
+    @Column(name="deposit_status", nullable=false)
+    private DepositStatusEnum status;
     @CreationTimestamp
     @Column(nullable=false,updatable=false)
     private LocalDateTime createdAt;

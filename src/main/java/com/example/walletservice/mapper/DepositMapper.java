@@ -11,5 +11,6 @@ import org.mapstruct.Mapping;
 public interface DepositMapper {
     Deposit  toEntity(DepositRequest depositRequest);
     @Mapping(source="wallet.id",target="walletId")
+    @Mapping(source="status",target="depositStatus")
     DepositResponse toResponse(Deposit deposit);
 }
