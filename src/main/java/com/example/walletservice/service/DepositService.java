@@ -1,13 +1,11 @@
 package com.example.walletservice.service;
 
-
 import com.example.walletservice.dto.request.DepositRequest;
 import com.example.walletservice.dto.response.DepositResponse;
 import com.example.walletservice.entity.Deposit;
 import com.example.walletservice.entity.Wallet;
 import com.example.walletservice.enums.DepositStatusEnum;
-import com.example.walletservice.enums.WalletStatusEnum;
-import com.example.walletservice.exception.*;
+import com.example.walletservice.exception.BadRequestException;
 import com.example.walletservice.mapper.DepositMapper;
 import com.example.walletservice.repository.DepositRepository;
 import com.example.walletservice.repository.WalletRepository;
@@ -17,117 +15,100 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.math.RoundingMode;
 
 @Service
 @RequiredArgsConstructor
 public class DepositService {
 
+    static final BigDecimal EARLY_CLOSE_RATE = new BigDecimal("2.00");
+
     private final DepositRepository depositRepository;
-    private final DepositMapper depositMapper;
     private final WalletRepository walletRepository;
+    private final DepositMapper depositMapper;
 
     @Transactional
-    public DepositResponse createDeposit(DepositRequest depositRequest){
-        Wallet wallet = walletRepository.findById(depositRequest.getWalletId())
-                .orElseThrow(()->
-                        new WalletNotFoundException("Wallet not found"));
+    public DepositResponse createDeposit(DepositRequest request){
+        BigDecimal rate = interestRateFor(request.termMonths());
+        Wallet wallet = walletRepository.getOrThrow(request.walletId());
         SecurityUtils.checkOwner(wallet.getUser());
-        if(wallet.getStatus() != WalletStatusEnum.ACTIVE){
-            throw new WalletNotActiveException("Wallet not active");
-        }
-        if((wallet.getBalance().compareTo(depositRequest.getAmount()) <0)){
-            throw new InsufficientBalanceException("Insufficient balance");
-        }
-        wallet.setBalance((wallet.getBalance().subtract(depositRequest.getAmount())));
-        walletRepository.save(wallet);
-        Deposit deposit = depositMapper.toEntity(depositRequest);
+        wallet.debit(request.amount());
+
+        Deposit deposit = depositMapper.toEntity(request);
         deposit.setWallet(wallet);
-        deposit.setInterestRate(calculateInterestRate(depositRequest.getTermMonths()));
+        deposit.setInterestRate(rate);
         deposit.setStartDate(LocalDate.now());
-        deposit.setEndDate(deposit.getStartDate().plusMonths(depositRequest.getTermMonths()));
+        deposit.setEndDate(deposit.getStartDate().plusMonths(request.termMonths()));
         deposit.setStatus(DepositStatusEnum.ACTIVE);
-        Deposit savedDeposit =  depositRepository.save(deposit);
-        return depositMapper.toResponse(savedDeposit);
-
+        return depositMapper.toResponse(depositRepository.save(deposit));
     }
 
-    private BigDecimal calculateInterestRate(Integer termMonths){
-        if(termMonths <= 0 ) {
-            throw new InvalidDepositTermException("Invalid deposit term");
-        }
-        if (termMonths <= 5){
-            return BigDecimal.valueOf(8.00);
-        }
-        else if(termMonths <= 11){
-            return BigDecimal.valueOf(10.00);
-        }
-        else if(termMonths <= 17){
-            return BigDecimal.valueOf(15.00);
-        }
-        else if(termMonths <= 24){
-            return BigDecimal.valueOf(20.00);
-        }
-        else{throw new InvalidDepositTermException("Invalid deposit term");}
-
-    }
-
-    public List<DepositResponse> getAllDeposits(Long walletId){
-        Wallet wallet = walletRepository.findById(walletId).orElseThrow(()->
-                new WalletNotFoundException("Wallet not found"));
-        SecurityUtils.checkOwner(wallet.getUser());
-        List<DepositResponse> deposits = depositRepository.findAllDepositsByWalletId(walletId)
+    @Transactional(readOnly = true)
+    public List<DepositResponse> getDeposits(Long walletId){
+        SecurityUtils.checkOwner(walletRepository.getOrThrow(walletId).getUser());
+        return depositRepository.findByWalletId(walletId)
                 .stream()
                 .map(depositMapper::toResponse)
                 .toList();
-        return deposits;
     }
 
-
+    @Transactional(readOnly = true)
     public DepositResponse getDeposit(Long depositId){
-        Deposit deposit = depositRepository.findById(depositId)
-                .orElseThrow(()->
-                        new DepositNotFoundException("Deposit not found"));
+        Deposit deposit = depositRepository.getOrThrow(depositId);
         SecurityUtils.checkOwner(deposit.getWallet().getUser());
         return depositMapper.toResponse(deposit);
     }
 
+    /**
+     * Before the end date the deposit is closed early at {@link #EARLY_CLOSE_RATE};
+     * on or after it, it completes at the agreed rate.
+     */
     @Transactional
     public DepositResponse closeDeposit(Long depositId){
-        Deposit deposit = depositRepository.findById(depositId)
-                .orElseThrow(()->
-                        new DepositNotFoundException("Deposit not found"));
-        SecurityUtils.checkOwner(deposit.getWallet().getUser());
-        if(deposit.getStatus() == DepositStatusEnum.CLOSED){
-            throw new DepositAlreadyClosedException("Deposit already closed");
-        }
-        else if(deposit.getStatus() == DepositStatusEnum.COMPLETED){
-            throw new DepositAlreadyCompletedException("Deposit already completed");
-        }
-        if(LocalDate.now().isBefore(deposit.getEndDate())){
-            deposit.setInterestRate(BigDecimal.valueOf(2.00));
-        }
-        long days = ChronoUnit.DAYS.between(deposit.getStartDate(),LocalDate.now());
-        // amount * rate% * days / 365, rounded to cents only at the end
-        BigDecimal interest = deposit.getAmount()
-                .multiply(deposit.getInterestRate())
-                .multiply(BigDecimal.valueOf(days))
-                .divide(BigDecimal.valueOf(36500), 2, RoundingMode.HALF_UP);
-        BigDecimal amountAfterDeposit = deposit.getAmount().add(interest);
+        Deposit deposit = depositRepository.getOrThrow(depositId);
         Wallet wallet = deposit.getWallet();
-        wallet.setBalance(wallet.getBalance().add(amountAfterDeposit));
-        if(LocalDate.now().isBefore(deposit.getEndDate())){
-            deposit.setStatus(DepositStatusEnum.CLOSED);
+        SecurityUtils.checkOwner(wallet.getUser());
+        if (deposit.getStatus() != DepositStatusEnum.ACTIVE) {
+            throw new BadRequestException("Deposit already " + deposit.getStatus().name().toLowerCase());
         }
-        else{
-            deposit.setStatus(DepositStatusEnum.COMPLETED);
+
+        LocalDate today = LocalDate.now();
+        boolean early = today.isBefore(deposit.getEndDate());
+        if (early) {
+            deposit.setInterestRate(EARLY_CLOSE_RATE);
         }
-        walletRepository.save(wallet);
-        depositRepository.save(deposit);
+        long days = ChronoUnit.DAYS.between(deposit.getStartDate(), today);
+        BigDecimal interest = calculateInterest(deposit.getAmount(), deposit.getInterestRate(), days);
+
+        wallet.credit(deposit.getAmount().add(interest));
+        deposit.setStatus(early ? DepositStatusEnum.CLOSED : DepositStatusEnum.COMPLETED);
         return depositMapper.toResponse(deposit);
     }
 
+
+    static BigDecimal calculateInterest(BigDecimal amount, BigDecimal annualRatePercent, long days) {
+        return amount
+                .multiply(annualRatePercent)
+                .multiply(BigDecimal.valueOf(days))
+                .divide(BigDecimal.valueOf(36500), 2, RoundingMode.HALF_UP);
+    }
+
+    static BigDecimal interestRateFor(int termMonths){
+        if (termMonths <= 0 || termMonths > 24) {
+            throw new BadRequestException("Deposit term must be between 1 and 24 months");
+        }
+        if (termMonths <= 5) {
+            return new BigDecimal("8.00");
+        }
+        if (termMonths <= 11) {
+            return new BigDecimal("10.00");
+        }
+        if (termMonths <= 17) {
+            return new BigDecimal("15.00");
+        }
+        return new BigDecimal("20.00");
+    }
 }

@@ -1,13 +1,20 @@
 package com.example.walletservice.repository;
 
 import com.example.walletservice.entity.User;
+import com.example.walletservice.exception.NotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User,Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
+
     boolean existsByPhone(String phone);
+
     Optional<User> findByEmail(String email);
+
+    default User getOrThrow(Long id) {
+        return findById(id).orElseThrow(() -> new NotFoundException("User " + id + " not found"));
+    }
 }

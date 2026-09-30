@@ -22,7 +22,7 @@ public class Deposit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="wallet_id",nullable=false)
     private Wallet wallet;
     @Column(nullable=false)

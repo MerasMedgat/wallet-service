@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "transaction")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,7 +20,7 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "wallet_id" , nullable = false)
     private Wallet wallet;
     @Column(nullable = false)
@@ -33,4 +34,13 @@ public class Transaction {
     @Column(nullable = false,updatable = false)
     private LocalDateTime createdAt;
 
+
+    public static Transaction of(Wallet wallet, TransactionTypeEnum type, BigDecimal amount) {
+        return Transaction.builder()
+                .wallet(wallet)
+                .transactionType(type)
+                .amount(amount)
+                .balanceAfterTransaction(wallet.getBalance())
+                .build();
+    }
 }

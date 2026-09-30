@@ -3,10 +3,7 @@ package com.example.walletservice.controller;
 import com.example.walletservice.dto.response.TransactionResponse;
 import com.example.walletservice.service.TransactionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 

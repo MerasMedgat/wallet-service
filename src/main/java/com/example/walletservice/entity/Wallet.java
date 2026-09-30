@@ -2,6 +2,7 @@ package com.example.walletservice.entity;
 
 import com.example.walletservice.enums.CurrencyEnum;
 import com.example.walletservice.enums.WalletStatusEnum;
+import com.example.walletservice.exception.BadRequestException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,7 +23,7 @@ public class Wallet {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="user_id",nullable=false)
     private User user;
     @Column(nullable=false,scale=2,precision=19)
@@ -40,5 +41,22 @@ public class Wallet {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    public void credit(BigDecimal amount) {
+        requireActive();
+        balance = balance.add(amount);
+    }
 
+    public void debit(BigDecimal amount) {
+        requireActive();
+        if (balance.compareTo(amount) < 0) {
+            throw new BadRequestException("Insufficient balance");
+        }
+        balance = balance.subtract(amount);
+    }
+
+    private void requireActive() {
+        if (status != WalletStatusEnum.ACTIVE) {
+            throw new BadRequestException("Wallet " + id + " is not active");
+        }
+    }
 }

@@ -3,24 +3,20 @@ package com.example.walletservice.dto.request;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
-public class RegisterRequest {
-    @Email
-    @NotBlank
-    private String email;
-    @NotBlank
-    @Size(min=8,max=100)
-    private String password;
-    @NotBlank
-    @Size(max=20)
-    private String phone;
-    @NotBlank
-    private String firstName;
-    @NotBlank
-    private String lastName;
-
+public record RegisterRequest(
+        @Email
+        @NotBlank
+        String email,
+        @NotBlank
+        @Size(min = 8, max = 100)
+        String password,
+        @NotBlank
+        @Size(max = 20)
+        String phone,
+        @NotBlank
+        String firstName,
+        @NotBlank
+        String lastName
+) {
 }

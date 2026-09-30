@@ -19,10 +19,10 @@ public class AuthService {
     private final JwtService jwtService;
 
     public AuthResponse login(LoginRequest request){
-        // throws BadCredentialsException (-> 401) on wrong email or password
+
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+        User user = userRepository.findByEmail(request.email()).orElseThrow();
         return new AuthResponse(jwtService.generateToken(user.getId()));
     }
 }

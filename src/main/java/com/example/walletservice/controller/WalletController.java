@@ -1,14 +1,12 @@
 package com.example.walletservice.controller;
 
-
+import com.example.walletservice.dto.request.AmountRequest;
 import com.example.walletservice.dto.request.WalletRequest;
-import com.example.walletservice.dto.request.WalletTopUpRequest;
-import com.example.walletservice.dto.request.WalletWithdrawRequest;
-import com.example.walletservice.dto.response.TransactionResponse;
 import com.example.walletservice.dto.response.WalletResponse;
 import com.example.walletservice.service.WalletService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +20,14 @@ public class WalletController {
     private final WalletService walletService;
 
     @PostMapping
-    public WalletResponse createWallet(@Valid @RequestBody WalletRequest walletRequest){
-        return walletService.createWallet(walletRequest);
+    @ResponseStatus(HttpStatus.CREATED)
+    public WalletResponse createWallet(@Valid @RequestBody WalletRequest request){
+        return walletService.createWallet(request);
+    }
 
+    @GetMapping
+    public List<WalletResponse> getMyWallets(){
+        return walletService.getMyWallets();
     }
 
     @GetMapping("/{walletId}")
@@ -32,9 +35,14 @@ public class WalletController {
         return walletService.getWallet(walletId);
     }
 
-    @GetMapping
-    public List<WalletResponse> getMyWallets(){
-        return walletService.getMyWallets();
+    @PostMapping("/{walletId}/top-up")
+    public WalletResponse topUp(@PathVariable Long walletId, @Valid @RequestBody AmountRequest request){
+        return walletService.topUp(walletId, request);
+    }
+
+    @PostMapping("/{walletId}/withdraw")
+    public WalletResponse withdraw(@PathVariable Long walletId, @Valid @RequestBody AmountRequest request){
+        return walletService.withdraw(walletId, request);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -48,16 +56,4 @@ public class WalletController {
     public WalletResponse activateWallet(@PathVariable Long walletId){
         return walletService.activateWallet(walletId);
     }
-
-    @PostMapping("/{walletId}/top-up")
-    public WalletResponse topUp(@PathVariable Long walletId, @Valid @RequestBody WalletTopUpRequest request){
-        return walletService.topUp(walletId,request);
-    }
-
-    @PostMapping("/{walletId}/withdraw")
-    public WalletResponse withdraw(@PathVariable Long walletId, @Valid @RequestBody WalletWithdrawRequest request){
-        return walletService.withdraw(walletId,request);
-    }
-
-
 }

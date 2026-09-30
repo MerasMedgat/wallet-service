@@ -1,6 +1,5 @@
 package com.example.walletservice.controller;
 
-
 import com.example.walletservice.dto.request.LoginRequest;
 import com.example.walletservice.dto.request.RegisterRequest;
 import com.example.walletservice.dto.request.UpdateUserRequest;
@@ -10,6 +9,7 @@ import com.example.walletservice.service.AuthService;
 import com.example.walletservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,6 +21,7 @@ public class UserController {
     private final AuthService authService;
 
     @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
     public UserResponse register(@Valid @RequestBody RegisterRequest request){
         return userService.register(request);
     }
@@ -39,6 +40,4 @@ public class UserController {
     public UserResponse updateCurrentUser(@Valid @RequestBody UpdateUserRequest request){
         return userService.updateCurrentUser(request);
     }
-
-
 }

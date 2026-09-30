@@ -6,11 +6,8 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-public record TransferRequest(
-        @NotNull
-        Long fromWalletId,
-        @NotNull
-        Long toWalletId,
+
+public record AmountRequest(
         @NotNull
         @DecimalMin("0.01")
         @Digits(integer = 17, fraction = 2)

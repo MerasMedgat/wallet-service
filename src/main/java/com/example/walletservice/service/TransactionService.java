@@ -1,14 +1,13 @@
 package com.example.walletservice.service;
 
 import com.example.walletservice.dto.response.TransactionResponse;
-import com.example.walletservice.entity.Wallet;
-import com.example.walletservice.exception.WalletNotFoundException;
 import com.example.walletservice.mapper.TransactionMapper;
 import com.example.walletservice.repository.TransactionRepository;
 import com.example.walletservice.repository.WalletRepository;
 import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,14 +16,12 @@ import java.util.List;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
-    private final TransactionMapper transactionMapper;
     private final WalletRepository walletRepository;
+    private final TransactionMapper transactionMapper;
 
+    @Transactional(readOnly = true)
     public List<TransactionResponse> getTransactionsByWalletId(Long walletId){
-        Wallet wallet = walletRepository.findById(walletId)
-                .orElseThrow(()->
-                        new WalletNotFoundException("Wallet not found"));
-        SecurityUtils.checkOwner(wallet.getUser());
+        SecurityUtils.checkOwner(walletRepository.getOrThrow(walletId).getUser());
         return transactionRepository.findByWalletId(walletId)
                 .stream()
                 .map(transactionMapper::toResponse)

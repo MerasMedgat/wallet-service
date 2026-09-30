@@ -1,80 +1,60 @@
 package com.example.walletservice.service;
 
-
 import com.example.walletservice.dto.request.RegisterRequest;
 import com.example.walletservice.dto.request.UpdateUserRequest;
 import com.example.walletservice.dto.response.UserResponse;
 import com.example.walletservice.entity.User;
 import com.example.walletservice.enums.RoleEnum;
-import com.example.walletservice.exception.EmailAlreadyExistsException;
-import com.example.walletservice.exception.PhoneAlreadyExistsException;
-import com.example.walletservice.exception.UserNotFoundException;
+import com.example.walletservice.exception.ConflictException;
 import com.example.walletservice.mapper.UserMapper;
 import com.example.walletservice.repository.UserRepository;
 import com.example.walletservice.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
-    public UserResponse register(RegisterRequest registerRequest){
-        if(userRepository.existsByEmail(registerRequest.getEmail())){
-            throw new EmailAlreadyExistsException("Email already exists");
+    @Transactional
+    public UserResponse register(RegisterRequest request){
+        if (userRepository.existsByEmail(request.email())) {
+            throw new ConflictException("Email already exists");
         }
-        if(userRepository.existsByPhone(registerRequest.getPhone())) {
-            throw new PhoneAlreadyExistsException("Phone already exists");
+        if (userRepository.existsByPhone(request.phone())) {
+            throw new ConflictException("Phone already exists");
         }
-
-
-        User user = userMapper.toEntity(registerRequest);
-
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
+        User user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.password()));
         user.setRole(RoleEnum.USER);
-
-        User savedUser = userRepository.save(user);
-
-        return userMapper.toResponse(savedUser );
+        return userMapper.toResponse(userRepository.save(user));
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getCurrentUser(){
-        User user = userRepository.findById(SecurityUtils.currentUserId())
-                .orElseThrow(()->
-                        new UserNotFoundException("User not Found"));
-        return userMapper.toResponse(user);
+        return userMapper.toResponse(userRepository.getOrThrow(SecurityUtils.currentUserId()));
     }
 
+    @Transactional
     public UserResponse updateCurrentUser(UpdateUserRequest request) {
-        User user = userRepository.findById(SecurityUtils.currentUserId())
-                .orElseThrow(() ->
-                        new UserNotFoundException("User not found"));
-        if (request.getEmail() != null
-                && !request.getEmail().equals(user.getEmail())
-                && userRepository.existsByEmail(request.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
+        User user = userRepository.getOrThrow(SecurityUtils.currentUserId());
+        if (request.email() != null
+                && !request.email().equals(user.getEmail())
+                && userRepository.existsByEmail(request.email())) {
+            throw new ConflictException("Email already exists");
         }
-        if (request.getPhone() != null
-                && !request.getPhone().equals(user.getPhone())
-                && userRepository.existsByPhone(request.getPhone())) {
-            throw new PhoneAlreadyExistsException("Phone already exists");
+        if (request.phone() != null
+                && !request.phone().equals(user.getPhone())
+                && userRepository.existsByPhone(request.phone())) {
+            throw new ConflictException("Phone already exists");
         }
-
         userMapper.updateEntity(request, user);
-        User savedUser = userRepository.save(user);
-        return userMapper.toResponse(savedUser);
-    }
-
-    public void deleteById(Long id){
-        User user = userRepository.findById(id)
-                .orElseThrow(()->
-                        new UserNotFoundException("UserNotFound"));
-        userRepository.delete(user);
+        return userMapper.toResponse(userRepository.saveAndFlush(user));
     }
 }

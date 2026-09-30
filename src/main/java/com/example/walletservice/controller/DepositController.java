@@ -5,6 +5,7 @@ import com.example.walletservice.dto.response.DepositResponse;
 import com.example.walletservice.service.DepositService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,9 +17,10 @@ public class DepositController {
 
     private final DepositService depositService;
 
-    @PostMapping()
-    public DepositResponse createDeposit(@Valid @RequestBody DepositRequest depositRequest){
-        return depositService.createDeposit(depositRequest);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public DepositResponse createDeposit(@Valid @RequestBody DepositRequest request){
+        return depositService.createDeposit(request);
     }
 
     @GetMapping("/{depositId}")
@@ -27,13 +29,12 @@ public class DepositController {
     }
 
     @GetMapping("/wallet/{walletId}")
-    public List<DepositResponse> getAllDeposit(@PathVariable Long walletId){
-        return depositService.getAllDeposits(walletId);
+    public List<DepositResponse> getDeposits(@PathVariable Long walletId){
+        return depositService.getDeposits(walletId);
     }
 
     @PostMapping("/{depositId}/close")
     public DepositResponse closeDeposit(@PathVariable Long depositId){
         return depositService.closeDeposit(depositId);
     }
-
 }

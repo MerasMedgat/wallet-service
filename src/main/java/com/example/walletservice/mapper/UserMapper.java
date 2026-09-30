@@ -8,15 +8,18 @@ import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
+    @BeanMapping(unmappedTargetPolicy = ReportingPolicy.IGNORE)
     User toEntity(RegisterRequest registerRequest);
 
     UserResponse toResponse(User user);
 
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+            unmappedTargetPolicy = ReportingPolicy.IGNORE)
     void updateEntity(UpdateUserRequest request,@MappingTarget User user);
 
 }
